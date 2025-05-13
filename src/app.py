@@ -78,6 +78,13 @@ activities = {
 }
 
 
+# Add payment tracking to activities
+def initialize_payments():
+    for activity in activities.values():
+        activity['payments'] = []
+
+initialize_payments()
+
 @app.get("/")
 def root():
     return RedirectResponse(url="/static/index.html")
@@ -130,3 +137,17 @@ def unregister_from_activity(activity_name: str, email: str):
     # Remove student
     activity["participants"].remove(email)
     return {"message": f"Unregistered {email} from {activity_name}"}
+
+
+@app.post("/activities/{activity_name}/payments")
+def manage_payments(activity_name: str, payment_data: dict):
+    """
+    Endpoint to manage payments for a specific activity based on attendance.
+    """
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    participants = activities[activity_name]["participants"]
+    payments = {participant: payment_data.get(participant, 0) for participant in participants}
+
+    return {"activity": activity_name, "payments": payments}
